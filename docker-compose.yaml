@@ -1,0 +1,16 @@
+services:
+  app:
+    build: .
+    command: >
+      bash -c "alembic upgrade head &&
+               uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload"
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+      - sqlite_data:/src
+    environment:
+      - DATABASE_URL=sqlite+aiosqlite:///./src/travel_planner.db
+
+volumes:
+  sqlite_data:
