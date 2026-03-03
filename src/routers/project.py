@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.core.database import get_async_session
 from src.crud.project import get_projects, get_project_or_404, create_project, update_project, delete_project
 from src.schemas.project import TravelProjectInfo, TravelProjectCreate, TravelProjectUpdate
+from src.services.art_institute import art_institute_client
 
 router = APIRouter(prefix="/projects", tags=["Projects"])
 
