@@ -39,3 +39,8 @@ class TravelProjectInfo(BaseModel):
     places: List[ProjectPlaceResponse] = []
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ProjectPlaceUpdate(BaseModel):
+    notes: Optional[str] = None
+    is_visited: Optional[bool] = None

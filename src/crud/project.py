@@ -7,8 +7,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlalchemy.util import await_only, has_compiled_ext
 
+from src.crud.places import MAX_PLACES_PER_PROJECT
 from src.models.project import TravelProject, ProjectPlace
 from src.schemas.project import TravelProjectCreate, TravelProjectUpdate
+from src.services.art_institute import art_institute_client
 
 
 async def get_project_or_404(db: AsyncSession, project_id: int) -> TravelProject:
@@ -42,10 +44,31 @@ async def get_projects(
 
 
 async def create_project(
-        db: AsyncSession,
-        data: TravelProjectCreate,
-        validated_place_ids: List[int]
+    db: AsyncSession,
+    data: TravelProjectCreate,
 ) -> TravelProject:
+    place_ids = data.place_ids or []
+
+    if len(place_ids) > MAX_PLACES_PER_PROJECT:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cannot add more than {MAX_PLACES_PER_PROJECT} places",
+        )
+
+    if len(place_ids) != len(set(place_ids)):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Duplicate place IDs in request",
+        )
+
+    for external_id in place_ids:
+        artwork = await art_institute_client.get_artwork(external_id)
+        if not artwork:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Artwork {external_id} not found in Art Institute API",
+            )
+
     project = TravelProject(
         name=data.name,
         description=data.description,
@@ -53,12 +76,12 @@ async def create_project(
     )
     db.add(project)
     await db.flush()
-    for external_id in validated_place_ids:
+
+    for external_id in place_ids:
         place = ProjectPlace(project_id=project.id, external_id=external_id)
         db.add(place)
-    await db.commit()
-    await db.refresh(project)
 
+    await db.commit()
     return await get_project_or_404(db, project.id)
 
 

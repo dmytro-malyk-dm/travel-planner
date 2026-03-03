@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.core.database import get_async_session
 from src.crud.project import get_projects, get_project_or_404, create_project, update_project, delete_project
 from src.schemas.project import TravelProjectInfo, TravelProjectCreate, TravelProjectUpdate
-from src.services.art_institute import art_institute_client
+
 
 router = APIRouter(prefix="/projects", tags=["Projects"])
 
@@ -33,7 +33,7 @@ async def create_new_project(
         data: TravelProjectCreate,
         db: AsyncSession = Depends(get_async_session)
 ):
-    return await create_project(db, data, validated_place_ids=data.place_ids or [])
+    return await create_project(db, data)
 
 
 @router.patch("/{project_id}", response_model=TravelProjectInfo)
